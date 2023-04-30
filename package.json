@@ -1,0 +1,11 @@
+{
+  "name": "authentication",
+  "version": "1.0.0",
+  "description": "A simple authentication api, created with nodejs, express, and jwt.\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D\u001b[D mongodb\u001b[C express and jwt.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alex Dingal",
+  "license": "ISC"
+}
