@@ -4,6 +4,8 @@
   "description": "A simple authentication api, created with nodejs, express, mongodb and jwt.",
   "main": "index.js",
   "scripts": {
+    "start:dev": "nodemon server.js",
+    "start:prod": "SET NODE_ENV=production & nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Alex Dingal",
