@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Please provide a password.'],
+    select: false,
   },
   passwordConfirm: {
     type: String,
@@ -39,6 +40,11 @@ const userSchema = new mongoose.Schema({
   active: {
     type: Boolean,
     default: true,
+  },
+  // Hide version key
+  __v: {
+    type: Number,
+    select: false,
   },
 })
 
