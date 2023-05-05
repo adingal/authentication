@@ -60,6 +60,14 @@ userSchema.pre('save', async function (next) {
   next()
 })
 
+// Check if entered password is the same with the db
+userSchema.methods.comparePassword = async function (
+  enteredPassword,
+  userPassword
+) {
+  return await bcrypt.compare(enteredPassword, userPassword)
+}
+
 const User = mongoose.model('User', userSchema)
 
 module.exports = User
