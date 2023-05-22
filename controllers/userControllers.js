@@ -56,6 +56,9 @@ exports.createUser = async (req, res, next) => {
       throw new Error('Failed to create new user, please try again.')
     }
 
+    // Remove password on response
+    newUser.password = undefined
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -73,10 +76,16 @@ exports.createUser = async (req, res, next) => {
 
 exports.updateUser = async (req, res, next) => {
   try {
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    })
+    const { name, email, role, active } = req.body
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      // Get only the items that can be updated
+      { name, email, role, active },
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
 
     if (!updatedUser) {
       throw new Error('User not found.')
