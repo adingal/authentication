@@ -1,128 +1,92 @@
 const User = require('../models/userModel')
+const catchAsync = require('../utils/catchAsync')
+const AppError = require('../utils/appError')
 
-exports.getAllUsers = async (req, res, next) => {
-  try {
-    const users = await User.find()
+exports.getAllUsers = catchAsync(async (req, res, next) => {
+  const users = await User.find()
 
-    res.status(200).json({
-      status: 'success',
-      data: {
-        users,
-      },
-    })
-  } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: 'No users found.',
-      errorStack: error,
-    })
+  res.status(200).json({
+    status: 'success',
+    data: {
+      users,
+    },
+  })
+})
+
+exports.getUser = catchAsync(async (req, res, next) => {
+  const user = await User.findById(req.params.id)
+
+  if (!user) {
+    return next(new AppError('No user found with this ID.', 404))
   }
-}
 
-exports.getUser = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.params.id)
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user,
+    },
+  })
+})
 
-    if (!user) {
-      throw new Error('No user found with this ID.')
-    }
+exports.createUser = catchAsync(async (req, res, next) => {
+  const newUser = await User.create({
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password,
+    passwordConfirm: req.body.passwordConfirm,
+    role: req.body.role,
+  })
 
-    res.status(200).json({
-      status: 'success',
-      data: {
-        user,
-      },
-    })
-  } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: 'No users found.',
-      errorStack: error,
-    })
-  }
-}
-
-exports.createUser = async (req, res, next) => {
-  try {
-    const newUser = await User.create({
-      name: req.body.name,
-      email: req.body.email,
-      password: req.body.password,
-      passwordConfirm: req.body.passwordConfirm,
-      role: req.body.role,
-    })
-
-    if (!newUser) {
-      throw new Error('Failed to create new user, please try again.')
-    }
-
-    // Remove password on response
-    newUser.password = undefined
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        newUser,
-      },
-    })
-  } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: 'Failed to create user.',
-      errorStack: error,
-    })
-  }
-}
-
-exports.updateUser = async (req, res, next) => {
-  try {
-    const { name, email, role, active } = req.body
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      // Get only the items that can be updated
-      { name, email, role, active },
-      {
-        new: true,
-        runValidators: true,
-      }
+  if (!newUser) {
+    return next(
+      new AppError('Failed to create new user, please try again.', 401)
     )
-
-    if (!updatedUser) {
-      throw new Error('User not found.')
-    }
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        updatedUser,
-      },
-    })
-  } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: 'Failed to update user.',
-      errorStack: error,
-    })
   }
-}
 
-exports.deleteUser = async (req, res, next) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id)
+  // Remove password on response
+  newUser.password = undefined
 
-    if (!user) {
-      throw new Error('No user found.')
+  res.status(200).json({
+    status: 'success',
+    data: {
+      newUser,
+    },
+  })
+})
+
+exports.updateUser = catchAsync(async (req, res, next) => {
+  const { name, email, role, active } = req.body
+  const updatedUser = await User.findByIdAndUpdate(
+    req.params.id,
+    // Get only the items that can be updated
+    { name, email, role, active },
+    {
+      new: true,
+      runValidators: true,
     }
+  )
 
-    res.status(204).json({
-      status: 'success',
-      data: null,
-    })
-  } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: 'Failed to delete user.',
-      errorStack: error,
-    })
+  if (!updatedUser) {
+    return next(new AppError('User not found.', 404))
   }
-}
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      updatedUser,
+    },
+  })
+})
+
+exports.deleteUser = catchAsync(async (req, res, next) => {
+  const user = await User.findByIdAndDelete(req.params.id)
+
+  if (!user) {
+    return next(new AppError('No user found.', 404))
+  }
+
+  res.status(204).json({
+    status: 'success',
+    data: null,
+  })
+})
