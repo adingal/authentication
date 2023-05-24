@@ -1,5 +1,6 @@
 const express = require('express')
 const morgan = require('morgan')
+const errorController = require('./controllers/errorController')
 
 // User routes
 const userRouter = require('./routes/userRoutes')
@@ -29,5 +30,8 @@ app.all('*', (req, res, next) => {
 
   next()
 })
+
+// Global error handler
+app.use(errorController)
 
 module.exports = app

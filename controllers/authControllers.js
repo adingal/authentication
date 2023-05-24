@@ -1,6 +1,8 @@
 const { promisify } = require('util')
 const User = require('../models/userModel')
 const jwt = require('jsonwebtoken')
+const catchAsync = require('../utils/catchAsync')
+const AppError = require('../utils/appError')
 
 const signToken = (id) =>
   jwt.sign({ id: id }, process.env.JWT_SECRET, {
@@ -35,88 +37,70 @@ const createSendToken = (user, statusCode, res) => {
   })
 }
 
-exports.login = async (req, res, next) => {
-  try {
-    const { email, password } = req.body
+exports.login = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body
 
-    if (!email || !password) {
-      throw new Error('Please provide email and password.')
-    }
-
-    const user = await User.findOne({ email }).select('+password')
-
-    if (!user || !(await user.comparePassword(password, user.password))) {
-      throw new Error('Incorrect email or password.')
-    }
-
-    // Update login date
-    await User.findByIdAndUpdate(user._id, {
-      lastLoggedIn: Date.now(),
-    })
-
-    createSendToken(user, 200, res)
-  } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: 'Failed to login user.',
-      errorStack: error,
-    })
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password.', 401))
   }
-}
 
-exports.protect = async (req, res, next) => {
-  try {
-    let token
-    // 1. Get token and check if it exist
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer')
-    ) {
-      token = req.headers.authorization.split(' ')[1]
-    }
+  const user = await User.findOne({ email }).select('+password')
 
-    if (!token) {
-      throw new Error('You are not logged in. Please login to get access.')
-    }
-
-    // 2. Verify token
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET)
-
-    // 3. Check if user still exist
-    const currentUser = await User.findById(decoded.id)
-
-    if (!currentUser) {
-      throw new Error('The user belonging to this token no longer exist.')
-    }
-
-    // Grant access to protected route
-    req.user = currentUser
-
-    next()
-  } catch (error) {
-    res.status(404).json({
-      status: 'fail',
-      message: 'Failed to login user.',
-      errorStack: error,
-    })
+  if (!user || !(await user.comparePassword(password, user.password))) {
+    return next(new AppError('Incorrect email or password.', 401))
   }
-}
+
+  // Update login date
+  await User.findByIdAndUpdate(user._id, {
+    lastLoggedIn: Date.now(),
+  })
+
+  createSendToken(user, 200, res)
+})
+
+exports.protect = catchAsync(async (req, res, next) => {
+  let token
+  // 1. Get token and check if it exist
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1]
+  }
+
+  if (!token) {
+    return next(
+      new AppError('You are not logged in. Please login to get access.', 401)
+    )
+  }
+
+  // 2. Verify token
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET)
+
+  // 3. Check if user still exist
+  const currentUser = await User.findById(decoded.id)
+
+  if (!currentUser) {
+    return next(
+      new AppError('The user belonging to this token no longer exist.', 401)
+    )
+  }
+
+  // Grant access to protected route
+  req.user = currentUser
+
+  next()
+})
 
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
-    try {
-      // roles ['admin', 'user']
-      if (!roles.includes(req.user.role)) {
-        throw new Error('You do not have permission to perform this action.')
-      }
-
-      next()
-    } catch (error) {
-      res.status(404).json({
-        status: 'fail',
-        message: 'You do not have permission to perform this action.',
-        errorStack: error,
-      })
+    // roles ['admin', 'user']
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError('You do not have permission to perform this action.', 403)
+      )
     }
+
+    next()
   }
 }
