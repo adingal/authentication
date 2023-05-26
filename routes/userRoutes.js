@@ -14,15 +14,18 @@ const router = express.Router()
 
 router.post('/login', login)
 
-router
-  .route('/')
-  .get(getAllUsers)
-  .post(protect, restrictTo('admin'), createUser)
+/**
+ * Need to login to access below routes
+ * Only admins are allowed to create, update, and delete user data
+ */
+router.use(protect)
+
+router.route('/').get(getAllUsers).post(restrictTo('admin'), createUser)
 
 router
   .route('/:id')
   .get(getUser)
-  .patch(protect, restrictTo('admin'), updateUser)
-  .delete(protect, restrictTo('admin'), deleteUser)
+  .patch(restrictTo('admin'), updateUser)
+  .delete(restrictTo('admin'), deleteUser)
 
 module.exports = router
