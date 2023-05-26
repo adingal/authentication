@@ -43,8 +43,9 @@ exports.createUser = catchAsync(async (req, res, next) => {
     )
   }
 
-  // Remove password on response
+  // Remove password and version key on response
   newUser.password = undefined
+  newUser.__v = undefined
 
   res.status(200).json({
     status: 'success',
