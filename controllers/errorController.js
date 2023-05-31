@@ -13,5 +13,11 @@ module.exports = (err, req, res, next) => {
 
   if (process.env.NODE_ENV === 'development') {
     sendDevError(err, res)
+  } else {
+    // Initial error for production
+    res.status(404).json({
+      status: 'fail',
+      message: 'Failed to connect on server.',
+    })
   }
 }
