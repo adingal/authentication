@@ -5,9 +5,20 @@ const dotenv = require('dotenv')
 dotenv.config({ path: './config.env' })
 const app = require('./app')
 
-// Connect to local db
+// Connect to DB
+let AUTH_DATABASE
+
+if (process.env.NODE_ENV === 'development') {
+  AUTH_DATABASE = process.env.DATABASE_LOCAL
+} else {
+  AUTH_DATABASE = process.env.DATABASE.replace(
+    '<PASSWORD>',
+    process.env.DATABASE_PASSWORD
+  )
+}
+
 mongoose
-  .connect(process.env.DATABASE_LOCAL, {
+  .connect(AUTH_DATABASE, {
     useNewUrlParser: true,
   })
   .then(() => console.log('DB connection successful!'))
