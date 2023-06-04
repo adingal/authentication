@@ -1,5 +1,6 @@
 const express = require('express')
 const morgan = require('morgan')
+const cors = require('cors')
 const errorController = require('./controllers/errorController')
 
 // User routes
@@ -17,6 +18,9 @@ app.use(express.json({ limit: '10kb' }))
 
 // Use this route as public
 app.use(express.static(`${__dirname}/public`))
+
+// Enable cors
+app.use(cors())
 
 // Routes
 app.use('/api/v1/users', userRouter)
