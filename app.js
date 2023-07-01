@@ -2,6 +2,10 @@ const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 const errorController = require('./controllers/errorController')
+const rateLimit = require('express-rate-limit')
+const helmet = require('helmet')
+const mongoSanitize = require('express-mongo-sanitize')
+const xss = require('xss-clean')
 
 // User routes
 const userRouter = require('./routes/userRoutes')
@@ -12,6 +16,23 @@ const app = express()
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
+
+// Set security HTTP headers
+app.use(helmet())
+
+// Limit request for 50 per hour same IP
+const limiter = rateLimit({
+  max: 999,
+  windowMs: 60 * 60 * 500,
+  message: 'Too many request from this IP, please try again in an hour.',
+})
+app.use('/api', limiter)
+
+// Data sanitization against NoSQL query injection
+app.use(mongoSanitize())
+
+// Data sanitization against XSS
+app.use(xss())
 
 // Parse incoming request to JSON
 app.use(express.json({ limit: '10kb' }))
